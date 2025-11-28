@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        let user1=new Object();
+        user1.name="郑湘兰";
+        user1.age=19;
+        console.log(user1.name+","+user1.age);
+
+        let user2={
+            name:"郑湘兰",
+            age:20,
+            gender:'女',
+
+        }
+        console.log(user2.name+","+user2.age);
+        function User3(){
+            this.name="郑湘兰";
+            this.age=21;
+        }
+        let user3=new User3();
+        console.log(user3.name+","+user3.age);
+        /*使用for...in循环复制对象*/
+        function copy1(obj){
+            let newobj={};
+            for(let key in obj){
+                newobj[key]=obj[key];
+
+            }
+            return newobj;
+
+
+        }
+        /*使用Object.assign()方法复制对象*/
+        function copy2(obj){
+            return Object.assign({},obj);
+        }
+        /*使用JSON序列化与反序列化*/
+        function copy3(obj){
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        let obj1=copy1(user2);
+        let obj2=copy2(user2);
+        let obj3=copy3(user2);
+        let arr=[];
+        arr.push(obj1,obj2,obj3);
+        console.log(arr);
+
+        
+        
+
+
+
+
+    </script>
+</body>
+</html>
