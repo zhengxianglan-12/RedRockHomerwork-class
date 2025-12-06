@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        function deepcopy(obj){
+            if(typeof obj!='object' || obj===null){
+                return obj;
+            }
+            //如果是数组
+            if(Array.isArray(obj)){
+                return obj.map(item=>deepcopy(item));
+
+            }
+            //如果是普通对象
+            const newobj={};
+            for(let key in obj){
+                //确保是对象自身的属性
+                if(obj.hasOwnProperty(key)){
+                    newobj[key]=deepcopy(obj[key]);
+                }
+            }
+            return newobj;
+
+        }
+        const person={
+            name:"郑湘兰",
+            age:19,
+            address:{
+               city: 'ChongQing',
+                area: 'RedRock' 
+            },
+            title:['student','programmer',{year:2025,title:'goodstudent'}]
+        }
+        const person2=deepcopy(person);
+        person2.name="李四";
+        person2.address.city="Beijing";
+        person2.title[2].title="badstudent";
+        console.log(person);
+        console.log(person2);
+
+    </script>
+</body>
+</html>
