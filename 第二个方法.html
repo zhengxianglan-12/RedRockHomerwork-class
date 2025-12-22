@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .container{
+            width: 90%;
+            max-width: 800px;
+            padding: 50px 40px;
+            position: relative;
+        }
+        .title{
+            text-align: center;
+            font-size: 3.2em;
+            margin-bottom: 60px;
+            color: #000000;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .content{
+            font-size: 1.4em;
+            line-height: 2.2;
+            color: #000000;
+            min-height: 400px;
+            position: relative;
+            text-indent: 2em;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">《记承天寺夜游》</div>
+        <div id="textcontent" class="content"></div>
+    </div>
+    <script>
+        const fulltext=`元丰六年十月十二日夜，解衣欲睡，月色入户，欣然起行。念无与为乐者，遂至承天寺寻张怀民。
+        怀民亦未寝，相与步于中庭。庭下如积水空明，水中藻、荇交横，盖竹柏影也。何夜无月？何处无竹柏？但少闲人如吾两人者耳。`;
+        const textCotent=document.getElementById('textcontent');
+        let currentindex=0;
+        const speed=500;
+        function getDelay(char){
+            const baseDelay=(60*1000)/speed;
+            if(char=='。'||char=='，'||char=='？'){
+                return baseDelay*1.8;
+            }else if(char=='\n'){
+                return baseDelay*3;
+            }
+            return baseDelay;
+        }
+        function delay(ms){
+            return new Promise(resolve=>setTimeout(resolve,ms));
+        }
+       async function typeWriter(){
+        let currentindex=0;
+        while(currentindex<fulltext.length){
+            const char=fulltext[currentindex];
+            textCotent.textContent+=char;
+            currentindex++;
+            let delaytime=getDelay(char);
+            await delay(delaytime)
+        }
+       }
+       document.addEventListener('DOMContentLoaded',async()=>{
+            await delay(500);
+            textCotent.textContent='';
+            await typeWriter();
+
+       });
+        
+
+
+    </script>
+</body>
+</html>
