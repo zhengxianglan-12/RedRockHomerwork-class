@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .comment-title{
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .comment-input{
+            width: 300px;
+            height: 60px;
+            padding: 8px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .submit-btn{
+            padding: 6px 12px;
+            margin-bottom: 20px;
+        }
+        .comment-item{
+            position: relative;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: azure;
+            border-radius: 5px;
+        }
+        .delete-btn{
+            position:absolute;
+            top:5px;
+            right:5px;
+            padding: 3px,8px;
+            cursor: pointer;
+            display: none;
+        }
+        .comment-item.active .delete-btn{
+            display:block;
+        }
+    </style>
+</head>
+<body>
+    <div class="comment-title">评论区</div>
+    <div>
+        <textarea class="comment-input" placeholder="请输入您的评论区"></textarea>
+        <button class="submit-btn">发送评论</button>
+    </div>
+    <div class="comment-container">
+
+    </div>
+    <script>
+        const commentInput=document.querySelector('.comment-input');
+        const submitBtn=document.querySelector('.submit-btn');
+        const commentContainer=document.querySelector('.comment-container');
+        submitBtn.addEventListener('click',addcomment);
+        commentInput.addEventListener('keydown',function(e){
+            if(e.key==='Enter' && !e.shiftKey){
+                e.preventDefault();
+                addcomment();
+            }
+        });
+        function addcomment(){
+            const content=commentInput.value.trim();
+            if(!content){
+                return;
+            }
+            const commentItem=document.createElement('div');
+            commentItem.className='comment-item';
+            commentItem.innerHTML=`
+            <div>${content}</div>
+            <button class="delete-btn">删除</button>
+            `;  
+            commentContainer.insertBefore(commentItem,commentContainer.firstChild);
+            commentInput.value='';
+            addDeleteFunction(commentItem);
+        }
+        function addDeleteFunction(commentElement){
+            const deletebtn=commentElement.querySelector('.delete-btn');
+            commentElement.addEventListener('contextmenu',function(e){
+            e.preventDefault();
+            document.querySelectorAll('.comment-item').forEach(item=>{
+                item.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
+        deletebtn.addEventListener('click',function(){
+           commentElement.remove();
+        });
+    }
+    document.addEventListener('click',function(){
+        document.querySelectorAll('.comment-item').forEach(item=>{
+            item.classList.remove('active');
+        });
+
+    });
+
+
+
+
+
+
+
+    </script>
+</body>
+</html>
