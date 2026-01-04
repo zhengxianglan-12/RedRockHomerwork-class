@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px;
+        }
+        .container{
+            max-width: 600px;
+            margin: auto;
+        }
+        button, input{
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .weather-info{
+            margin-top: 20px;
+            padding: 15px;
+            background: #e0f7fa;
+            border-radius: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LV1:获取重庆天气</h1>
+        <p>请输入你的OpenWeatherMap API Key：</p>
+        <input type="password" id="apikey" placeholder="请输入你的API Key" style="width: 300px; padding: 8px;">
+        <button onclick="getWeather()">获取重庆天气</button>
+        <div id="result" class="weather-info"></div>
+    </div>
+    <script>
+        async function getWeather() {
+            const apiKey=document.getElementById('apikey').value;
+            const resultDiv=document.getElementById('result');
+            if(!apiKey){
+                resultDiv.innerHTML='<p style="color:red;">请输入有效的API Key。</p>';
+                return;
+            }
+            resultDiv.innerHTML='<p>正在获取天气信息...</p>';
+            const cityname='Chongqing';
+            const apiUrl=`https://api.openweathermap.org/data/2.5/weather?q=${cityname}&appid=${apiKey}&units=metric&lang=zh_cn`;
+            try{
+                const response=await fetch(apiUrl);
+                if(!response.ok){
+                    throw new Error(`网络请求失败：${response.status}`);
+                }
+                const weatherData=await response.json();
+                resultDiv.innerHTML=`<h3>重庆天气信息:</h3>
+                    <p><strong>城市:</strong> ${weatherData.name}</p>
+                    <p><strong>天气:</strong> ${weatherData.weather[0].description}</p>
+                    <p><strong>温度:</strong> ${weatherData.main.temp} °C</p>
+                    <p><strong>湿度:</strong> ${weatherData.main.humidity} %</p>
+                    <p><strong>风速:</strong> ${weatherData.wind.speed} m/s</p>
+                `;
+            }catch(error){
+                resultDiv.innerHTML = `<p style="color: red;">错误: ${error.message}</p>`;
+                console.error('获取天气信息时出错：',error);
+            }
+            
+        }
+    </script>
+</body>
+</html>

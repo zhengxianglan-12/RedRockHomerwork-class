@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px;
+        }
+        .container{
+            max-width: 600px;
+            margin: auto;
+        }
+        label, button, input, textarea{
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 16px;
+            padding: 8px;
+        }
+        button{
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LV2:创建Github仓库</h1>
+        <label >Github Personal Access Token (PAT):</label>
+        <input type="password" id="pat" placeholder="请输入你的Github PAT">
+        <label >仓库名称</label>
+        <input type="text" id="reponame" value="myproject" placeholder="仓库名称">
+        <label >仓库描述：</label>
+        <textarea id="repoDesc">这是通过JavaScript API创建的仓库</textarea>
+        <label >
+            <input type="checkbox" id="isprivate">设为私有仓库
+        </label>
+        <button onclick="createRepo()" style="background: #4dead2;color: blue;">创建仓库</button>
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+    <script>
+        async function createRepo(){
+            const pat=document.getElementById('pat').value;
+            const repoName=document.getElementById('reponame').value;
+            const repoDesc=document.getElementById('repoDesc').value;
+            const isPrivate=document.getElementById('isprivate').checked;
+            const resultDiv=document.getElementById('result');
+            if(!pat){
+            resultDiv.innerHTML='<p style="color:red;">请输入有效的Github PAT。</p>';
+                return;
+            }
+            if(!repoName){
+                resultDiv.innerHTML='<p style="color:red;">请输入仓库名称。</p>';
+                return;
+            }
+            resultDiv.innerHTML='<p>正在创建仓库...</p>';
+            const repodata={
+                name:repoName,
+                description:repoDesc,
+                private:isPrivate
+            };
+            const requestOptions={
+                method:'POST',
+                headers:{
+                    'Authorization': `token ${pat}`,
+                    'Content-Type': 'application/json',
+                },
+                body:JSON.stringify(repodata)
+            };
+            try{
+                const response=await fetch('https://api.github.com/user/repos', requestOptions);
+                const result=await response.json();
+                if(!response.ok){
+                    throw new Error(`创建仓库失败：${response.status}`);
+                }
+                resultDiv.innerHTML=`<h3>仓库创建成功!</h3>
+                    <p><strong>仓库名称:</strong> ${result.name}</p>
+                    <p><strong>描述:</strong> ${result.description}</p>
+                    <p><strong>仓库链接:</strong> <a href="${result.html_url}" target="_blank">${result.html_url}</a></p>
+                `;
+            }catch(error){
+                resultDiv.innerHTML = `<p style="color: red;">错误: ${error.message}</p>`;
+            }
+
+        }
+
+    </script>
+</body>
+</html>
