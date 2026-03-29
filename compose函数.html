@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        function compose(...fns){
+            // 参数验证：确保所有传入的参数都是函数
+            for(let fn of fns){
+                if(typeof fn!='function'){
+                    throw new TypeError('arguments must be function')
+                }
+            }
+            // 边界处理：没有传入函数时，返回恒等函数
+            if(fns.length==0){
+                return arg=>arg
+            }
+            // 边界处理：只传入一个函数时，直接返回该函数
+            if(fns.length==1){
+                return fns[0]
+            }
+            // 核心逻辑：返回组合后的执行函数
+            return function(...args){
+                // 从右到左依次执行每个函数
+                return fns.reduceRight((acc,fn,index)=>{
+                    // 最后一个函数（最右侧）使用初始参数执行
+                    if(index==fns.length-1){
+                        return fn.apply(this,args)
+                    }
+                    // 处理异步情况：如果前一个函数返回 Promise
+                    if(acc&&typeof acc.then=='function'){
+                        return acc.then(result=>{
+                            return fn.call(this,result)
+                        })
+
+                    }
+                    // 同步情况：直接调用下一个函数
+                    return fn.call(this,acc)
+                },null)
+            }
+        }
+        //同步测试函数
+        const add10=(x)=>{
+            console.log(`add10:${x}+10=${x+10}`);
+            return x+10;
+            
+        }
+        const mul5=(x)=>{
+            console.log(`mul5:${x}*5=${x*5}`);
+            return x*5;
+        }
+        const square=(x)=>{
+            console.log(`square:${x}*${x}=${x*x}`);
+            return x*x;
+        }
+        const composeResult=compose(add10,mul5,square);
+        console.log(composeResult(10));
+
+        //异步测试函数
+        const asyncadd10=async(x)=>{
+            console.log(`asyncadd10:${x}+10=${x+10}`);
+            return new Promise(resolve=>{
+                setTimeout(()=>{
+                    resolve(x+10)
+                },1000)
+            })
+        }
+        const asyncMul5=async(x)=>{
+            console.log(`asyncMul5:${x}*5=${x*5}`);
+            return new Promise(resolve=>{
+                setTimeout(()=>{
+                    resolve(x*5)
+                },1000)
+            })
+        }
+        const asyncSquare=async(x)=>{
+            console.log(`asyncSquare:${x}*${x}=${x*x}`);
+            return new Promise(resolve=>{
+                setTimeout(()=>{
+                    resolve(x*x)
+                },1000)
+            })
+        }
+        const asyncComposeResult=compose(asyncadd10,asyncMul5,asyncSquare);
+        asyncComposeResult(10).then(result=>{
+            console.log(result)
+        })
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .content {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: space-evenly;
+        }
+
+        .throttle,
+        .antiShake {
+            width: 500px;
+            height: 500px;
+            background-color:#ffddee;
+            margin: 0 20px;
+        }
+        .result{
+            width: 100%;
+            font-size: 30px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="throttle">
+             <h2>节流 (Throttle) 输入框</h2>
+            <input type="text" id="throttleInput">
+            <div class="result">
+                <div class="result-item">
+                    <span>输入次数：</span>
+                    <span id="throttleCount">0</span>
+                </div>
+                <div class="result-item">
+                    <span>处理次数：</span>
+                    <span id="throttleProcess">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="antiShake">
+             <h2>防抖 (Debounce) 输入框</h2>
+            <input type="text" id="antiShakeInput">
+            <div class="result">
+                <div class="result-item">
+                    <span>输入次数：</span>
+                    <span id="antiShakeCount">0</span>
+                </div>
+                <div class="result-item">
+                    <span>处理次数：</span>
+                    <span id="antiShakeProcess">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 节流函数
+        function Throttle(fn, delay){
+            let timer=null;
+            let lasttime=0;
+            return function(...args){ 
+                let now=Date.now();
+                let remaining=delay-(now-lasttime);
+                if(remaining<=0){
+                    lasttime=now;
+                    fn.apply(this,args);
+                }else if(!timer){
+                    timer=setTimeout(()=>{
+                        lasttime=Date.now();
+                        timer=null;
+                        fn.apply(this,args);
+                    },remaining);
+                }
+
+            }
+        }
+
+        // 防抖函数
+        function AntiShake(fn, delay){
+            let timer=null;
+            let lasttime=0;
+            return function(...args){ 
+                let now=Date.now();
+                lasttime=now;
+                if(timer){
+                    clearTimeout(timer);
+                }
+                timer=setTimeout(()=>{
+                    if(Date.now()-lasttime>=delay){
+                        fn.apply(this,args);
+                    }
+                },delay);
+            }
+        }
+        let stats={
+            throttle:{inputCount:0,processCount:0}
+            ,antiShake:{inputCount:0,processCount:0}
+        }
+
+        function updateStats(type){
+            const data=stats[type];
+            document.getElementById(`${type}Count`).innerHTML=data.inputCount;
+            document.getElementById(`${type}Process`).innerHTML=data.processCount;
+
+        }
+        const throttleInput=document.getElementById('throttleInput');
+        const antiShakeInput=document.getElementById('antiShakeInput');
+        const throttleHandler=Throttle((e)=>{
+            const value=e.target.value;
+            stats.throttle.processCount++;
+            updateStats('throttle');
+
+        },1000);
+        throttleInput.addEventListener('input',(e)=>{
+            stats.throttle.inputCount++;
+            updateStats('throttle');
+            throttleHandler(e);
+        })
+        const antiShakeHandler=AntiShake((e)=>{
+            stats.antiShake.processCount++;
+            updateStats('antiShake');
+            const value=e.target.value;
+
+        },1000);
+        antiShakeInput.addEventListener('input',(e)=>{
+            stats.antiShake.inputCount++;
+            updateStats('antiShake');
+
+            antiShakeHandler(e);
+        })
+
+    </script>
+
+</body>
+
+</html>
