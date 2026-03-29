@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        // Promise 的三种状态
+        const PENDING = 'pending';      // 等待中
+        const FULFILLED = 'fulfilled';  // 成功
+        const REJECTED = 'rejected';    // 失败
+
+        /**
+         * 实现核心功能：then、catch、resolve、reject、all、race
+         */
+        class MyPromise {
+            // 构造函数
+            constructor(executor) {
+                this.state = PENDING;  // 初始状态：等待中
+                this.value = null;     // 成功时的值
+                this.reason = null;    // 失败时的原因
+
+                // 存储成功回调函数的数组
+                this.onFulfilledCallbacks = [];
+                // 存储失败回调函数的数组
+                this.onRejectedCallbacks = [];
+
+                // resolve 函数：将状态改为成功
+                const resolve = (value) => {
+                    // 只有状态是 PENDING 时才能改变
+                    if (this.state === PENDING) {
+                        this.state = FULFILLED;  // 改为成功状态
+                        this.value = value;      // 保存成功的值
+
+                        // 执行所有成功回调
+                        this.onFulfilledCallbacks.forEach(fn => fn());
+                    }
+                };
+
+                // reject 函数：将状态改为失败
+                const reject = (reason) => {
+                    if (this.state === PENDING) {
+                        this.state = REJECTED;  // 改为失败状态
+                        this.reason = reason;   // 保存失败的原因
+
+                        // 执行所有失败回调
+                        this.onRejectedCallbacks.forEach(fn => fn());
+                    }
+                };
+
+                // 立即执行 executor
+                try {
+                    executor(resolve, reject);
+                } catch (error) {
+                    // 如果 executor 执行出错，直接 reject
+                    reject(error);
+                }
+            }
+
+            
+            then(onFulfilled, onRejected) {
+                // 创建新的 Promise，用于链式调用
+                const promise2 = new MyPromise((resolve, reject) => {
+                    // 处理成功的情况
+                    const handleFulfilled = () => {
+                        // 用 setTimeout 模拟微任务
+                        setTimeout(() => {
+                            try {
+                                // 如果传了成功回调，执行它
+                                if (typeof onFulfilled === 'function') {
+                                    const x = onFulfilled(this.value);
+                                    // 处理返回值
+                                    this.resolvePromise(promise2, x, resolve, reject);
+                                } else {
+                                    // 没传回调，直接传递值
+                                    resolve(this.value);
+                                }
+                            } catch (error) {
+                                // 回调执行出错
+                                reject(error);
+                            }
+                        }, 0);
+                    };
+
+                    // 处理失败的情况
+                    const handleRejected = () => {
+                        setTimeout(() => {
+                            try {
+                                if (typeof onRejected === 'function') {
+                                    const x = onRejected(this.reason);
+                                    this.resolvePromise(promise2, x, resolve, reject);
+                                } else {
+                                    // 没传错误回调，传递错误
+                                    reject(this.reason);
+                                }
+                            } catch (error) {
+                                reject(error);
+                            }
+                        }, 0);
+                    };
+
+                    // 根据当前状态决定执行哪个回调
+                    if (this.state === FULFILLED) {
+                        handleFulfilled();
+                    } else if (this.state === REJECTED) {
+                        handleRejected();
+                    } else {
+                        // 状态还是 PENDING，先把回调存起来
+                        this.onFulfilledCallbacks.push(handleFulfilled);
+                        this.onRejectedCallbacks.push(handleRejected);
+                    }
+                });
+
+                return promise2;
+            }
+
+            /**
+             * 处理 then 返回的值
+             */
+            resolvePromise(promise2, x, resolve, reject) {
+                // 如果返回的是同一个 Promise，报错
+                if (promise2 === x) {
+                    return reject(new TypeError('Chaining cycle detected'));
+                }
+
+                // 标记是否已调用，防止多次调用
+                let called = false;
+
+                if (x instanceof MyPromise) {
+                    // 如果 x 是 Promise，等它完成
+                    x.then(
+                        y => {
+                            // 递归处理，因为 y 可能还是 Promise
+                            this.resolvePromise(promise2, y, resolve, reject);
+                        },
+                        reject
+                    );
+                } else if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
+                    // 如果 x 是对象或函数
+                    try {
+                        const then = x.then;
+                        if (typeof then === 'function') {
+                            // 如果 x 有 then 方法，当作 Promise 处理
+                            then.call(
+                                x,// this 指向 x
+                                y => {
+                                    if (called) return;
+                                    called = true;
+                                    this.resolvePromise(promise2, y, resolve, reject);
+                                },
+                                r => {
+                                    if (called) return;
+                                    called = true;
+                                    reject(r);
+                                }
+                            );
+                        } else {
+                            // 普通对象，直接 resolve
+                            resolve(x);
+                        }
+                    } catch (error) {
+                        if (called) return;
+                        called = true;
+                        reject(error);
+                    }
+                } else {
+                    // 普通值，直接 resolve
+                    resolve(x);
+                }
+            }
+
+            /**
+             * catch 方法：错误处理
+             * 就是 then 的简写形式
+             */
+            catch(onRejected) {
+                return this.then(null, onRejected);
+            }
+
+            /**
+             * finally 方法：无论成功失败都执行
+             */
+            finally(callback) {
+                return this.then(
+                    value => MyPromise.resolve(callback()).then(() => value),
+                    reason => MyPromise.resolve(callback()).then(() => { throw reason; })
+                );
+            }
+
+            /**
+             * 静态方法：创建已成功的 Promise
+             */
+            static resolve(value) {
+                // 如果已经是 Promise，直接返回
+                if (value instanceof MyPromise) {
+                    return value;
+                }
+                // 创建新的 Promise 并立即成功
+                return new MyPromise(resolve => resolve(value));
+            }
+
+            /**
+             * 静态方法：创建已失败的 Promise
+             */
+            static reject(reason) {
+                return new MyPromise((_, reject) => reject(reason));
+            }
+
+            /**
+             * 静态方法：等所有 Promise 成功
+             * 简化版：用数组代替 Iterator
+             */
+            static all(promises) {
+                return new MyPromise((resolve, reject) => {
+                    const results = [];       // 存储结果
+                    let count = 0;           // 成功计数
+                    const length = promises.length;
+
+                    // 空数组直接成功
+                    if (length === 0) {
+                        resolve(results);
+                        return;
+                    }
+
+                    promises.forEach((promise, index) => {
+                        // 确保每个都是 Promise
+                        MyPromise.resolve(promise).then(
+                            value => {
+                                results[index] = value;  // 按顺序保存
+                                count++;
+
+                                // 全部成功
+                                if (count === length) {
+                                    resolve(results);
+                                }
+                            },
+                            error => {
+                                // 有一个失败就整体失败
+                                reject(error);
+                            }
+                        );
+                    });
+                });
+            } 
+        }
+        
+    </script>
+</body>
+
+</html>
