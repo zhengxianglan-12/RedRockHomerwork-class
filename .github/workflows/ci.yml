@@ -1,0 +1,38 @@
+name: CI - 自动化代码检查
+
+on:
+  push:
+    branches: [ '*' ]  # 所有分支推送时检查
+  pull_request:
+    branches: [ '*' ]  
+
+jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+    name: 运行 ESLint 检查
+    
+    steps:
+    # 1. 拉取代码
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    # 2. 安装 pnpm
+    - name: 安装 pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+    
+    # 3. 设置 Node.js
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'  # 必须用 pnpm 缓存
+    
+    # 4. 安装依赖
+    - name: 安装依赖
+      run: pnpm install
+    
+    # 5. 执行 Lint 检查
+    - name: 运行代码规范检查
+      run: pnpm run lint
